@@ -1,5 +1,6 @@
 use std::env;
 use std::ffi::CString;
+use std::process::exit;
 
 use nix::fcntl::{fcntl, F_GETFD};
 use nix::sys::stat::{fchmod, mode_t, Mode};
@@ -14,7 +15,7 @@ fn usage() -> ! {
 usage: <MODE> <FD> <...> -- <COMMAND> <...>"#,
         PROGNAME, VERSION,
     );
-    std::process::exit(1);
+    exit(1);
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -32,10 +33,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .position(|arg| arg == "--")
         .expect("separator (--) not found");
 
-    let fd: Vec<i32> = args[1..=sep]
+    let fds: Vec<i32> = args[1..=sep]
         .iter()
         .map(|arg| arg.parse().unwrap())
-        .filter(|arg| fcntl(*arg, F_GETFD).is_ok())
+        .filter(|fd| fcntl(*fd, F_GETFD).is_ok())
         .collect();
 
     let argv: Vec<_> = args[(sep + 2)..]
@@ -43,8 +44,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|arg| CString::new(arg.as_str()).unwrap())
         .collect();
 
-    for x in &fd {
-        fchmod(*x, mode)?;
+    for fd in &fds {
+        fchmod(*fd, mode)?;
     }
 
     execvp(&argv[0], &argv)?;
