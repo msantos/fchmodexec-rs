@@ -21,7 +21,9 @@ usage: <MODE> <FD> <...> -- <COMMAND> <...>"#,
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().skip(1).collect();
 
-    if args.len() < 4 {
+    // 0: mode
+    // 1..n: fd <...>
+    if args.len() < 2 {
         usage()
     }
 
@@ -43,6 +45,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .iter()
         .map(|arg| CString::new(arg.as_str()).unwrap())
         .collect();
+
+    if argv.len() == 0 {
+        usage()
+    }
 
     for fd in &fds {
         fchmod(*fd, mode)?;
