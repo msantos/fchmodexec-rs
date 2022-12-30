@@ -30,10 +30,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bits: mode_t = u32::from_str_radix(&args[0], 8).unwrap();
     let mode = Mode::from_bits(bits).unwrap();
 
-    let sep = args[1..]
-        .iter()
-        .position(|arg| arg == "--")
-        .expect("separator (--) not found");
+    let sep = match args[1..].iter().position(|arg| arg == "--") {
+        Some(n) => n,
+        None => usage(),
+    };
 
     let fds: Vec<i32> = args[1..=sep]
         .iter()
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|arg| CString::new(arg.as_str()).unwrap())
         .collect();
 
-    if argv.len() == 0 {
+    if argv.is_empty() {
         usage()
     }
 
